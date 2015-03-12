@@ -2,12 +2,29 @@ var express = require( 'express' );
 var app = express();
 var swig = require('swig');
 var routes = require('./routes/');
+var bodyParser = require('body-parser');
+
+var socketio = require('socket.io');
+
+
+
+
 swig.setDefaults({ cache: false });
 
 
 var morgan = require('morgan');
 app.use(morgan('dev'));
-app.use('/', routes);
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
+
+
+
+app.engine('html', swig.renderFile);
+app.set('view engine', 'html');
+app.set('views', __dirname + '/views');
+
+app.use(express.static(__dirname + '/public'));
+
 
 var server = app.listen(3000, function () {
 
@@ -16,11 +33,9 @@ var server = app.listen(3000, function () {
   console.log('Example app listening at http://%s:%s', host, port);
 });
 
-app.engine('html', swig.renderFile);
-app.set('view engine', 'html');
-app.set('views', __dirname + '/views');
+var io = socketio.listen(server);
+app.use('/', routes(io));
 
-app.use(express.static(__dirname + '/public'));
 // respond with "hello world" when a GET request is made to the homepage
 // app.get('/', function(req, res) {
 // 	var people = [{name: 'Full'}, {name: 'Stacker'}, {name: 'Son'}];
